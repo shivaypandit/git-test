@@ -1,42 +1,56 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'php-app'
+        CONTAINER_NAME = 'php-app-container'
+        PORT = '9090'  // Updated port
+    }
+
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/shivaypandit/git-test.git'
+                git branch: 'master', url: 'https://github.com/shivaypandit/git-test.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t php-app .'
+                    sh "docker build -t ${IMAGE_NAME} ."
                 }
             }
         }
 
-        stage('Run Container') {
+        stage('Run Docker Container') {
             steps {
                 script {
-                    sh 'docker stop php-app || true && docker rm php-app || true'
-                    sh 'docker run -d --name php-app -p 8080:80 php-app'
+                    // Stop and remove any existing container
+                    sh "docker stop ${CONTAINER_NAME} || true"
+                    sh "docker rm ${CONTAINER_NAME} || true"
+                    
+                    // Start the new container on updated port
+                    sh "docker run -d --name ${CONTAINER_NAME} -p ${PORT}:80 ${IMAGE_NAME}"
                 }
             }
         }
 
-        stage('Post-Deployment Check') {
+        stage('Test Deployment') {
             steps {
                 script {
-                    sh 'curl -f http://localhost:8080 || exit 1'
+                    // Perform a simple test using curl
+                    sh "curl -f http://localhost:${PORT} || exit 1"
                 }
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline completed.'
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs for details.'
         }
     }
 }
