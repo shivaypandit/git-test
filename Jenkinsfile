@@ -22,9 +22,11 @@ pipeline {
 
         stage('Run Docker Container') {
             steps {
-                sh "docker stop php-app-container || true"
-                sh "docker rm php-app-container || true"
-                sh "docker run -d --name php-app-container -p 9090:80 php-app"
+                script {
+                    sh "docker stop php-app-container || true"
+                    sh "docker rm php-app-container || true"
+                    sh "docker run -d --name php-app-container -p 9090:80 php-app"
+                }
             }
         }
 
@@ -37,10 +39,14 @@ pipeline {
 
     post {
         success {
-            slackSend(channel: '#ci-cd', message: '✅ Build succeeded for PHP App!')
+            script {
+                slackSend(channel: '#ci-cd', message: '✅ Build succeeded for PHP App!')
+            }
         }
         failure {
-            slackSend(channel: '#ci-cd', message: '❌ Build failed for PHP App!')
+            script {
+                slackSend(channel: '#ci-cd', message: '❌ Build failed for PHP App!')
+            }
         }
     }
 }
